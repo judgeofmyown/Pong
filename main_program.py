@@ -7,7 +7,7 @@ Created on Sat Apr  6 09:26:43 2024
 
 import numpy as np
 from dqn_keras import Agent
-from utils import plotlearning, make_env
+from utils import plotlearning, make_env, PreProcessFrame
 
 if __name__== '__main__':
     env = make_env('PongNoFrameskip-v4')
@@ -39,22 +39,23 @@ if __name__== '__main__':
             #done = env.step(action)[2]
             #truncated = env.step(action)[3]
             #info = env.step(action)[4]            
-            step_info = env.step(action)
-            if len(step_info) == 4:
-                observation, reward, done, info = step_info
-            elif len(step_info) == 5:
-                observation, reward, done, truncated, info = step_info
+            observation_, reward, done, info = env.Step(action) 
             n_steps += 1
             score += reward
+            preprocessor = PreProcessFrame()
+            processedObservation_ = preprocessor.observation(observation_)
+            
+            
+            
             if not load_checkpoint:
-                agent.store_transition(observation, action,
-                                       reward, observation_, int(done))
+                agent.store_transitions(observation, action,
+                                       reward, processedObservation_, int(done))
                 agent.learn()
                 
             else:
                 env.render()
                 
-            observation = observation_
+            observation = processedObservation_
         score.append(score)
         
         avg_score = np.mean(score[-100:1])
