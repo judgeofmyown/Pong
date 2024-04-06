@@ -63,17 +63,21 @@ class SkipEnv(gym.Wrapper):
         t_reward = 0.0
         done = False
         for _ in range (self._skip):
-            obs, reward, done, info = self.env.step(action)
+            obs = self.env.step(action)[0] 
+            reward = self.env.step(action)[1]
+            done = self.env.step(action)[2]
+            info = self.env.step(action)[3]
+            
             t_reward += reward
             if done:
                 break
         return obs, t_reward, done, info
     
 class PreProcessFrame(gym.ObservationWrapper):
-    def __init__self(self, env=None):
+    def __init__(self, env=None):
         super(PreProcessFrame, self).__init__(env)
         self.observation_space = gym.spaces.Box(low =0, high = 255,
-                                                shape = (80,80,1), dtype = np.unit8)
+                                                shape = (80,80,1), dtype = np.uint8)
         
     def observation(self, obs):
         return PreProcessFrame.process(obs)
@@ -86,7 +90,7 @@ class PreProcessFrame(gym.ObservationWrapper):
  
         new_frame = new_frame[35:195:2, ::2].reshape(80,80,1)
         
-        return new_frame.astype(np.unit6)
+        return new_frame.astype(np.uint8)
     
     
 class MoveImgChannel(gym.ObservationWrapper):
@@ -112,25 +116,28 @@ class BufferWrapper(gym.ObservationWrapper):
                                 env.observation_space.low.repeat(n_steps, axis=0),
                                 env.observation_space.high.repeat(n_steps, axis=0),
                                 dtype=np.float32)
-    def reset(self):
-        self.buffer=np.zeros_like(self.observation_space.low, dtype=np.float32)
+    def Reset(self):
+        self.buffer = np.zeros_like(self.observation_space.low, dtype=np.float32)
         return self.observation(self.env.reset())
     
     def observation(self, observation):
+        
+        frame = observation[0]
+        
         self.buffer[:-1] = self.buffer[1:]
-        self.buffer[-1] = observation
+        self.buffer[-1] = frame
         return self.buffer
     
-    def make_env(env_name):
-        env = gym.make(env_name)
-        env=SkipEnv(env)
-        env=PreProcessFrame(env)
-        env=MoveImgChannel(env)
-        env=BufferWrapper(env, 4)
-        return ScaleFrame(env)        
+def make_env(env_name):
+    env = gym.make(env_name)
+    env=SkipEnv(env)
+    env=PreProcessFrame(env)
+    env=MoveImgChannel(env)
+    env=BufferWrapper(env, 4)
+    return ScaleFrame(env)        
     
     
-    
+
     
     
     
