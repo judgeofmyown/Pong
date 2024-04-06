@@ -27,7 +27,7 @@ class ReplayBuffer(object):
         self.terminal_memory = np.zeros(self.max_size, dtype=np.uint8)
         
     def store_transition(self, state, action, reward, state_, done):
-        index = self.mem_sntr % self.max_size
+        index = self.mem_cntr % self.max_size
         self.state_memory[index] = state
         self.new_state_memory[index] = state_
         self.reward_memory[index] = reward
@@ -92,14 +92,20 @@ class Agent(object):
             self.q_next.set_weights(self.q_eval.get_weights())
             
     def store_transitions(self, state, action,reward, new_state, done):
-            self.memory.store_transitions(state, action, reward, new_state, done)
+            self.memory.store_transition(state, action, reward, new_state, done)
             
     def choose_action(self, observation):
         if np.random.choice(self.action_space) < self.epsilon:
             action = np.random.choice(self.action_space)
         else:
+            
             state = np.array([observation], copy=False, dtype=np.float32)
-            actions = self.q_eval.predict(state)
+            input_state = np.squeeze(state)
+            input_state_reshaped = input_state[:4]
+            input_final = np.expand_dims(input_state, axis=0)
+            print(state)
+            print(input_state_reshaped)
+            actions = self.q_eval.predict(input_final)
             action = np.argmax(actions)
                 
                 
