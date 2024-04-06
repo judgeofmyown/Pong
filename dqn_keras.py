@@ -17,17 +17,17 @@ class ReplayBuffer(object):
         self.max_size = max_size
         self.mem_cntr = 0
         
-        self.state_memory = np.zeros((self.mem_size, *input_shape),
+        self.state_memory = np.zeros((self.max_size, *input_shape),
                                       dtype=np.float32)
         
-        self.new_state_memory = np.zeros((self.mem_size, *input_shape),
+        self.new_state_memory = np.zeros((self.max_size, *input_shape),
                                       dtype=np.float32)
-        self.action_memory = np.zeros(self.mem_size, dtype= np.int32)
-        self.reward_memory = np.zeros(self.mem_size, dtype=np.float32)
-        self.terminal_memory = np.zeros(self.mem_size, dtype=np.uint8)
+        self.action_memory = np.zeros(self.max_size, dtype= np.int32)
+        self.reward_memory = np.zeros(self.max_size, dtype=np.float32)
+        self.terminal_memory = np.zeros(self.max_size, dtype=np.uint8)
         
     def store_transition(self, state, action, reward, state_, done):
-        index = self.mem_sntr % self.mem_size
+        index = self.mem_sntr % self.max_size
         self.state_memory[index] = state
         self.new_state_memory[index] = state_
         self.reward_memory[index] = reward
@@ -64,7 +64,7 @@ def build_dqn(lr, n_actions, input_dims, fc1_dims):
     model.add(Dense(fc1_dims, activation='relu'))
     model.add(Dense(n_actions))
     
-    model = compile(optimizer=Adam(lr=lr), loss='mean_squared_error')
+    model.compile(optimizer=Adam(learning_rate=lr), loss='mean_squared_error')
     
     return model
 
@@ -74,6 +74,7 @@ class Agent(object):
                  q_eval_fname='q_eval.h5', q_target_fname='q_target.h5'):
         self.action_space = [i for i in range(n_actions)]
         self.gamma = gamma
+        self.epsilon = epsilon
         self.eps_dec = eps_dec
         self.eps_min = eps_min
         self.batch_size = batch_size
@@ -90,19 +91,19 @@ class Agent(object):
         if self.replace != 0 and self.learn_step % self.replace == 0:
             self.q_next.set_weights(self.q_eval.get_weights())
             
-        def store_transitions(self, state, action,reward, new_state, done):
-            self.memory.store_transition(state, action, reward, new_state, done)
+    def store_transitions(self, state, action,reward, new_state, done):
+            self.memory.store_transitions(state, action, reward, new_state, done)
             
-        def choose_action(self, observation):
-            if np.randon.choice() < self.epsilon:
-                action = np.random.choice(self.action_space)
-            else:
-                state = np.array([observation], copy=False, dtype=np.float32)
-                actions = self.q_eval.predict(state)
-                action = np.argmax(actions)
+    def choose_action(self, observation):
+        if np.random.choice(self.action_space) < self.epsilon:
+            action = np.random.choice(self.action_space)
+        else:
+            state = np.array([observation], copy=False, dtype=np.float32)
+            actions = self.q_eval.predict(state)
+            action = np.argmax(actions)
                 
                 
-            return action
+        return action
         
     def learn(self):
         if self.memory.mem_cntr > self.batch_size:
