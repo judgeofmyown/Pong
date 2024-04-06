@@ -59,7 +59,7 @@ class SkipEnv(gym.Wrapper):
         super(SkipEnv, self).__init__(env)
         self._skip = skip
         
-    def step(self, action):
+    def Step(self, action):
         t_reward = 0.0
         done = False
         for _ in range (self._skip):
@@ -77,7 +77,7 @@ class PreProcessFrame(gym.ObservationWrapper):
     def __init__(self, env=None):
         super(PreProcessFrame, self).__init__(env)
         self.observation_space = gym.spaces.Box(low =0, high = 255,
-                                                shape = (80,80,1), dtype = np.uint8)
+                                                shape = (80,80,4), dtype = np.uint8)
         
     def observation(self, obs):
         return PreProcessFrame.process(obs)
