@@ -16,7 +16,7 @@ if __name__== '__main__':
     best_score = -21
     
     agent = Agent(gamma=0.99, epsilon=1.0, alpha=0.0001, input_dims=(4,80,80),
-                  n_actions=6, memsize=25000, eps_min=0.02, batch_size=32,
+                  n_actions=6, mem_size=25000, eps_min=0.02, batch_size=32,
                   replace=1000, eps_dec=1e-5)
     
     if load_checkpoint:
@@ -29,11 +29,21 @@ if __name__== '__main__':
     
     for i in range(num_games):
         score = 0
-        observation = env.reset()
+        observation = env.Reset()
         done = False
         while not done :
             action = agent.choose_action(observation)
-            observation_, reward, done, info = env.step(action)
+            #print(env.step(action).shape)
+            #observation_ = env.step(action)[0]
+            #reward = env.step(action)[1]
+            #done = env.step(action)[2]
+            #truncated = env.step(action)[3]
+            #info = env.step(action)[4]            
+            step_info = env.step(action)
+            if len(step_info) == 4:
+                observation, reward, done, info = step_info
+            elif len(step_info) == 5:
+                observation, reward, done, truncated, info = step_info
             n_steps += 1
             score += reward
             if not load_checkpoint:
